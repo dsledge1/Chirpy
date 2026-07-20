@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"sync/atomic"
 )
 
@@ -65,11 +66,10 @@ func main() {
 		if len(params.Body) > 140 {
 			respondWithError(w, 400, "Chirp is too long") //Fix the error message to be JSON
 		} else {
-			respondWithJSON(w, 200, validResponse{Valid: true})
+			respondWithJSON(w, 200, profanityFilter(params.Body))
 		}
 
 	})
-
 	server := &http.Server{
 		Addr:    ":8080",
 		Handler: mux,
@@ -95,4 +95,21 @@ func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 	w.WriteHeader(code)
 
 	w.Write([]byte(resp))
+}
+
+func profanityFilter(body string) string {
+	lower := strings.ToLower(body)
+	fmt.Println(lower)
+	words := strings.Split(lower, " ")
+	fmt.Println(words)
+	badwords := []string{"kerfuffle", "sharbert", "fornax"}
+	//temp := body
+	for _, word := range words {
+		for _, badword := range badwords {
+			if strings.ToLower(word) == badword {
+				body = strings.Replace(body, word, "****", -1)
+			} // Fix to replace any occurrence of bad word
+		}
+	}
+	return body
 }
