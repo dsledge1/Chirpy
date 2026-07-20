@@ -20,8 +20,8 @@ func (cfg *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler {
 	})
 }
 
-type validResponse struct {
-	Valid bool `json:"valid"`
+type cleanedResponse struct {
+	CleanedBody string `json:"cleaned_body"`
 }
 
 type errorResponse struct {
@@ -66,7 +66,7 @@ func main() {
 		if len(params.Body) > 140 {
 			respondWithError(w, 400, "Chirp is too long") //Fix the error message to be JSON
 		} else {
-			respondWithJSON(w, 200, profanityFilter(params.Body))
+			respondWithJSON(w, 200, cleanedResponse{CleanedBody: profanityFilter(params.Body)})
 		}
 
 	})
@@ -98,18 +98,19 @@ func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 }
 
 func profanityFilter(body string) string {
-	lower := strings.ToLower(body)
-	fmt.Println(lower)
-	words := strings.Split(lower, " ")
+	fmt.Println("Original body:", body)
+	words := strings.Split(body, " ")
 	fmt.Println(words)
 	badwords := []string{"kerfuffle", "sharbert", "fornax"}
-	//temp := body
-	for _, word := range words {
+	for i, word := range words {
 		for _, badword := range badwords {
 			if strings.ToLower(word) == badword {
-				body = strings.Replace(body, word, "****", -1)
-			} // Fix to replace any occurrence of bad word
+				words[i] = strings.Replace(word, word, "****", -1)
+				//words[i] = "****"
+			}
 		}
 	}
-	return body
+	newBody := strings.Join(words, " ")
+	fmt.Println("Filtered body:", newBody)
+	return newBody
 }
